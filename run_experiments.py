@@ -18,7 +18,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from recbole.config import Config  # noqa: E402
 from recbole.data import create_dataset, data_preparation  # noqa: E402
-from recbole.utils import get_model, get_trainer, init_logger, init_seed  # noqa: E402
+from recbole.quick_start import run_recbole  # noqa: E402
+from recbole.utils import get_trainer, init_logger, init_seed  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from models.bpr_reg import BPRReg  # noqa: E402
@@ -48,22 +49,28 @@ BPR_COMMON = {
 
 
 def run_one(model, config_dict):
-    """Same flow as recbole.quick_start.run_recbole, but accepts a model class."""
-    config = Config(model=model, config_dict={**COMMON, **config_dict})
-    init_seed(config["seed"], config["reproducibility"])
-    init_logger(config)
-    logging.getLogger().setLevel(logging.WARNING)
+    """Built-in RecBole models go through run_recbole() as in the README / quick_start.py.
+    A custom model class (BPRReg) is not accepted by run_recbole, so for that case the
+    same steps as run_recbole are executed here with the class passed to Config directly."""
+    config_dict = {**COMMON, **config_dict}
+    if isinstance(model, str):
+        result = run_recbole(model=model, dataset="ml-100k", config_dict=config_dict)
+        test_result = result["test_result"]
+    else:
+        config = Config(model=model, config_dict=config_dict)
+        init_seed(config["seed"], config["reproducibility"])
+        init_logger(config)
+        logging.getLogger().setLevel(logging.WARNING)
 
-    dataset = create_dataset(config)
-    train_data, valid_data, test_data = data_preparation(config, dataset)
+        dataset = create_dataset(config)
+        train_data, valid_data, test_data = data_preparation(config, dataset)
 
-    init_seed(config["seed"], config["reproducibility"])
-    model_cls = model if not isinstance(model, str) else get_model(model)
-    net = model_cls(config, train_data._dataset).to(config["device"])
-    trainer = get_trainer(config["MODEL_TYPE"], config["model"])(config, net)
+        init_seed(config["seed"] + config["local_rank"], config["reproducibility"])
+        net = model(config, train_data._dataset).to(config["device"])
+        trainer = get_trainer(config["MODEL_TYPE"], config["model"])(config, net)
 
-    trainer.fit(train_data, valid_data, saved=True, show_progress=False)
-    test_result = trainer.evaluate(test_data, load_best_model=True, show_progress=False)
+        trainer.fit(train_data, valid_data, saved=True, show_progress=False)
+        test_result = trainer.evaluate(test_data, load_best_model=True, show_progress=False)
     return {m: float(test_result[m]) for m in METRICS}
 
 

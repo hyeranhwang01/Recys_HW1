@@ -24,7 +24,10 @@ python run_experiments.py --exp knn  # or: bpr, i2i
 python plot_results.py             # figures -> results/*.png, prints the (3) table
 ```
 
-`ml-100k` is downloaded automatically by RecBole on the first run.
+`ml-100k` ships with RecBole (`recbole/dataset_example/ml-100k`), so no download is needed.
+Built-in models (ItemKNN, SLIMElastic, EASE) are run through `recbole.quick_start.run_recbole()`
+exactly as in the RecBole README; the custom BPR model goes through the same steps with the
+model class passed to `Config` directly, since `run_recbole()` only accepts a model name.
 Evaluation uses RecBole defaults: random 8:1:1 split, full ranking, top-10 metrics, seed 2026.
 
 ## Notes
