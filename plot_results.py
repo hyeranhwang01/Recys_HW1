@@ -85,7 +85,7 @@ def fig_bpr(df, exp, xcol, xlabel, fname, title):
 
 
 def table_i2i(df):
-    rows = [df[(df.exp == "knn") & (df.knn_method == "item") & (df.k.astype(int) == 100)].iloc[0],
+    rows = [df[(df.exp == "knn") & (df.knn_method == "item") & (df.k == 100)].iloc[0],
             df[df.model == "SLIMElastic"].iloc[0],
             df[df.model == "EASE"].iloc[0]]
     names = ["ItemKNN (k=100)", "SLIM", "EASE"]
